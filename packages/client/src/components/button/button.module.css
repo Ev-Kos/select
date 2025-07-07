@@ -19,6 +19,7 @@
   outline: none;
   transition: box-shadow 0.2s ease;
   cursor: pointer;
+  height: 34px;
 }
 
 .button:not(.disabled):hover,
