@@ -1,0 +1,36 @@
+@font-face {
+  font-family: 'Roboto';
+  src: url('./fonts/Roboto-Medium.ttf') format('ttf');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+.button,
+.button_disabled {
+  box-sizing: border-box;
+  border-radius: 3px;
+  color: #0066cc;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid #0066cc;
+  padding: 8px 16px;
+  outline: none;
+  transition: box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.button:not(.disabled):hover,
+.button:not(.disabled):focus {
+  box-shadow: 0 0 0 2px #0066cc;
+}
+
+.disabled {
+  opacity: 0.6;
+  cursor: auto;
+}
+
+.button:focus {
+  outline: none;
+}
