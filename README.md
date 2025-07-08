@@ -12,7 +12,6 @@
 
 - Клонировать репозиторий `git clone`
 - Установить зависимости `npm install`
-- Собрать проект `npm run build`
-- Запустить клиента `npm run start:client`
-- Запустить сервера `npm run start:server`
+- Запустить клиент `npm run start:client`
+- Запустить сервер `npm run start:server`
 - Запустить клиент и сервер `npm run start`
