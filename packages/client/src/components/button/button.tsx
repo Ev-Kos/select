@@ -1,4 +1,4 @@
-import { KeyboardEvent, MouseEvent, ReactNode, useMemo, useRef } from 'react';
+import { KeyboardEvent, MouseEvent, ReactNode, useRef } from 'react';
 import styles from './button.module.css';
 
 type TButtonProps = {

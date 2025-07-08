@@ -1,6 +1,6 @@
 import { getResultOfSelectedOptionsApi } from "../api/api";
 import { AppThunk } from "../store";
-import { TError, TResponse, TValue } from "../types";
+import { TResponse, TValue } from "../types";
 
 export const RESULT_OF_SELECTED_OPTION__REQUEST: 'RESULT_OF_SELECTED_OPTION__REQUEST' = 'RESULT_OF_SELECTED_OPTION__REQUEST';
 export const RESULT_OF_SELECTED_OPTION_SUCCESS: 'RESULT_OF_SELECTED_OPTION_SUCCESS' = 'RESULT_OF_SELECTED_OPTION_SUCCESS';
