@@ -1,14 +1,13 @@
-import { KeyboardEvent, MouseEvent, ReactNode, useRef } from 'react';
+import { KeyboardEvent, MouseEvent, ReactNode, useMemo, useRef } from 'react';
 import styles from './button.module.css';
 
 type TButtonProps = {
-  className?: string;
   children: ReactNode;
   disabled?: boolean;
   onClick: VoidFunction;
 }
 
-export const Button = ({className, children, disabled, onClick, ...props}: TButtonProps) => {
+export const Button = ({children, disabled, onClick, ...props}: TButtonProps) => {
   const buttonRef = useRef<HTMLDivElement>(null);
 
   const handleClick = (e: MouseEvent<HTMLDivElement>) => {
@@ -31,7 +30,7 @@ export const Button = ({className, children, disabled, onClick, ...props}: TButt
       role="button"
       tabIndex={disabled ? -1 : 0}
       ref={buttonRef}
-      className={`${styles.button} ${className || ''} ${disabled ? styles.disabled : ''}`}
+      className={`${styles.button} ${disabled && styles.disabled}`}
       aria-disabled={disabled}
       onClick={handleClick}
       onKeyDown={handleKeyDown}

@@ -1,3 +1,7 @@
+:root {
+  --primary-button-color: #0066cc;
+}
+
 @font-face {
   font-family: 'Roboto';
   src: url('./fonts/Roboto-Medium.ttf') format('ttf');
@@ -6,15 +10,14 @@
   font-display: swap;
 }
 
-.button,
-.button_disabled {
+.button {
   box-sizing: border-box;
   border-radius: 3px;
-  color: #0066cc;
+  color: var(--primary-button-color);
   font-family: 'Roboto', sans-serif;
   font-size: 14px;
   font-weight: 600;
-  border: 1px solid #0066cc;
+  border: 1px solid var(--primary-button-color);
   padding: 8px 16px;
   outline: none;
   transition: box-shadow 0.2s ease;
@@ -24,12 +27,12 @@
 
 .button:not(.disabled):hover,
 .button:not(.disabled):focus {
-  box-shadow: 0 0 0 2px #0066cc;
+  box-shadow: 0 0 0 2px var(--primary-button-color);
 }
 
 .disabled {
   opacity: 0.6;
-  cursor: auto;
+  pointer-events: none;
 }
 
 .button:focus {

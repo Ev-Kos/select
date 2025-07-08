@@ -1,4 +1,14 @@
-import { CSSProperties, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { 
+  CSSProperties, 
+  KeyboardEvent, 
+  MouseEvent as ReactMouseEvent, 
+  ChangeEvent,
+  useCallback, 
+  useEffect, 
+  useMemo, 
+  useRef, 
+  useState 
+} from 'react';
 import styles from './select.module.css';
 import { FixedSizeList } from 'react-window';
 
@@ -13,26 +23,54 @@ type TSelectProps = {
   name: string;
 }
 
-const dropdownDirectionState = {
-  up: 'up',
-  down: 'down'
-}
+const DROPDOWN_DIRECTION = {
+  UP: 'UP',
+  DOWN: 'DOWN'
+} as const;
 
-export const Select = ({options, onChange, name}: TSelectProps) => {
+export const Select = ({ options, onChange, name }: TSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [inputValue, setInputValue] = useState('');
+  const [inputText, setInputText] = useState('');
   const [selectedOption, setSelectedOption] = useState<TOption | null>(null);
-  const [dropdownDirection, setDropdownDirection] = useState('');
+  const [dropdownDirection, setDropdownDirection] = 
+    useState<keyof typeof DROPDOWN_DIRECTION | ''>('');
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  
   const selectRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<FixedSizeList>(null);
-
-  console.log(inputValue)
+  
   const filteredOptions = useMemo(() => 
     options.filter(option => 
-    option.name.toLowerCase().startsWith(inputValue.toLowerCase())
-  ),[options, inputValue]);
+      option.name.toLowerCase().startsWith(inputText.toLowerCase())
+    ),
+    [options, inputText]
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const selectedIndex = selectedOption 
+      ? filteredOptions.findIndex(opt => opt.value === selectedOption.value) 
+      : -1;
+      
+    const newIndex = Math.max(
+      selectedIndex, 
+      filteredOptions.length > 0 ? 0 : -1
+    );
+    
+    setHighlightedIndex(newIndex);
+  }, [isOpen, filteredOptions, selectedOption]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    setHighlightedIndex(prev => {
+      if (filteredOptions.length === 0) return -1;
+      return Math.min(Math.max(prev, 0), filteredOptions.length - 1);
+    });
+  }, [filteredOptions, isOpen]);
 
   useEffect(() => {
     if (!isOpen || !selectRef.current) return;
@@ -44,8 +82,8 @@ export const Select = ({options, onChange, name}: TSelectProps) => {
     
     setDropdownDirection(
       spaceBottom >= listHeight || spaceBottom > spaceTop 
-        ? dropdownDirectionState.down 
-        : dropdownDirectionState.up
+        ? DROPDOWN_DIRECTION.DOWN 
+        : DROPDOWN_DIRECTION.UP
     );
   }, [isOpen, filteredOptions.length]);
 
@@ -60,6 +98,22 @@ export const Select = ({options, onChange, name}: TSelectProps) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (isOpen) {
+      inputRef.current?.focus();
+    } else {
+      if (selectedOption) {
+        setInputText(selectedOption.name);
+      }
+    }
+  }, [isOpen, selectedOption]);
+
+  useEffect(() => {
+    if (isOpen && highlightedIndex >= 0 && listRef.current) {
+      listRef.current.scrollToItem(highlightedIndex, 'auto');
+    }
+  }, [highlightedIndex, isOpen]);
+
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Delete' && e.target === selectRef.current) {
       clearInput();
@@ -68,7 +122,7 @@ export const Select = ({options, onChange, name}: TSelectProps) => {
     }
 
     if (!isOpen) {
-      if (e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if (['Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
         setIsOpen(true);
         e.preventDefault();
       }
@@ -85,54 +139,45 @@ export const Select = ({options, onChange, name}: TSelectProps) => {
         }
         break;
       case 'ArrowDown':
-        setHighlightedIndex(prev => {
-          const newIndex = Math.min(prev + 1, filteredOptions.length - 1);
-          listRef.current?.scrollToItem(newIndex, 'auto');
-          return newIndex;
-        });
+        setHighlightedIndex(prev => 
+          Math.min(prev + 1, filteredOptions.length - 1)
+        );
         e.preventDefault();
         break;
       case 'ArrowUp':
-        setHighlightedIndex(prev => {
-          const newIndex = Math.max(prev - 1, 0);
-          listRef.current?.scrollToItem(newIndex, 'auto');
-          return newIndex;
-        });
+        setHighlightedIndex(prev => Math.max(prev - 1, 0));
         e.preventDefault();
         break;
       case 'Tab':
         setIsOpen(false);
         break;
-      case 'Backspace':
-        setSelectedOption(null);
-        break;
-      case 'Delete':
-        setSelectedOption(null);
-        break;
     }
   };
 
-  useEffect(() => {
-    if(inputValue.length === 0) {
-      onChange(null)
-      setSelectedOption(null)
-    }
-  }, [inputValue])
-
   const handleOptionSelect = useCallback((option: TOption) => {
-    onChange(option);
-    setInputValue(option.name)
     setSelectedOption(option);
+    onChange(option);
     setIsOpen(false);
   }, [onChange]);
 
-  const clearInput = () => {
-    setInputValue('');
-    setSelectedOption(null)
-    if (inputRef.current) inputRef.current.focus();
+  const clearInput = (e?: ReactMouseEvent) => {
+    if (e) e.stopPropagation();
+    setInputText('');
+    setSelectedOption(null);
+    onChange(null);
+    inputRef.current?.focus();
   };
 
-  const Row = ({ index, style }: { index: number; style: CSSProperties }) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputText(value);
+    
+    if (value && filteredOptions.length > 0) {
+      setHighlightedIndex(0);
+    }
+  };
+
+  const OptionRow = useCallback(({ index, style }: { index: number; style: CSSProperties }) => {
     const option = filteredOptions[index];
     const isSelected = selectedOption?.value === option.value;
     const isHighlighted = highlightedIndex === index;
@@ -140,58 +185,78 @@ export const Select = ({options, onChange, name}: TSelectProps) => {
     return (
       <div
         style={style}
-        className={`${styles.option} ${isSelected ? styles.selected : ''} ${isHighlighted ? styles.highlighted : ''}`}
+        className={`${styles.option} 
+          ${isSelected ? styles.selected : ''} 
+          ${isHighlighted ? styles.highlighted : ''}`}
         onClick={() => handleOptionSelect(option)}
         onMouseEnter={() => setHighlightedIndex(index)}
       >
         {option.name}
       </div>
     );
-  };
+  }, [filteredOptions, selectedOption, highlightedIndex, handleOptionSelect]);
+
+  const handleOpenDropdown = (e: ReactMouseEvent) => {
+    const target = e.target as HTMLElement;
+    const isInput = target === inputRef.current;
+    const isButton = target.tagName === 'BUTTON' || target.closest('button');
+    if (!isOpen && !isButton && !isInput) {
+      setIsOpen(true);
+    }
+  }
 
   return (
-    <div 
+     <div 
       ref={selectRef}
       className={isOpen ? styles.selectOpen : styles.select}
-      tabIndex={0}
+      tabIndex={-1}
       onKeyDown={handleKeyDown}
-      onFocus={() => setIsOpen(true)}
-    >
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={(e: ReactMouseEvent) => handleOpenDropdown(e)}>
       <input
         ref={inputRef}
         type="text"
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onClick={() => setIsOpen(true)}
+        value={isOpen ? inputText : (selectedOption?.name || '')}
+        onChange={handleInputChange}
         className={styles.input}
         name={name}
+        tabIndex={0}
+        onFocus={() => !isOpen && setIsOpen(true)}
       />
-      {inputValue && (
-        <button className={styles.clearButton} onClick={clearInput}>
+      {isHovered && (inputText || selectedOption) && (
+        <button 
+          className={styles.clearButton} 
+          onClick={clearInput}
+          aria-label="Clear selection">
           ×
         </button>
       )}
       <button 
         className={styles.dropdownButton}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        ▼
+        onClick={(e: ReactMouseEvent) => {
+          e.stopPropagation();
+          setIsOpen(prev => !prev);
+        }}
+        aria-expanded={isOpen}>
+        &#9660;
       </button>
-
-      {isOpen && dropdownDirection && (
-        <div className={dropdownDirection === dropdownDirectionState.down ? styles.dropdownDown : styles.dropdownUp}>
+      {isOpen && dropdownDirection && filteredOptions.length > 0 && (
+        <div 
+          className={dropdownDirection === DROPDOWN_DIRECTION.DOWN 
+            ? styles.dropdownDown 
+            : styles.dropdownUp}>
           <FixedSizeList
             ref={listRef}
             height={Math.min(filteredOptions.length * 35, 250)}
             itemCount={filteredOptions.length}
             itemSize={35}
             width={250}
-            key={filteredOptions.length}
           >
-            {Row}
+            {OptionRow}
           </FixedSizeList>
         </div>
       )}
     </div>
   );
-}
+};

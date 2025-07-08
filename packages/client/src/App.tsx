@@ -11,9 +11,9 @@ import { InfoMessage } from './components/info-message/info-message';
 const App = () => {
 
   const {options, request, error, selectedOption} = useAppSelector((store) => store.optionsReducer);
-  const {request: sendOption, error: sendOptionError, result} = useAppSelector((store) => store.resultOfSelectedOptionsReducer);
+  const {error: sendOptionError, result} = useAppSelector((store) => store.resultOfSelectedOptionsReducer);
   const dispatch = useAppDispatch();
-  const [value, setValue] = useState('')
+  const [prevValue, setPrevValue] = useState('')
 
   useEffect(() => {
     try {
@@ -27,11 +27,16 @@ const App = () => {
     if (selectedOption) {
       try {
         dispatch(resultOfSelectedOption({ value: selectedOption.value }))
+        setPrevValue(selectedOption.value)
       } catch (error) {
         console.error(`Ошибка resultOfSelectedOption: ${error}`)
       }
     }
   }
+
+  const isEqualValue = useMemo(() => {
+    return selectedOption?.value === prevValue
+  }, [selectedOption, prevValue])
 
   const onChange = (option: TOption | null) => {
     dispatch(SelectedOption(option))
@@ -57,13 +62,13 @@ const App = () => {
               onChange={(option) => onChange(option)} 
               name='numbers'
             />
-            <Button onClick={sendRequest}>Отправить</Button>
+            <Button onClick={sendRequest} disabled={selectedOption ? false : true}>Отправить</Button>
           </div>
         )}
         {!options || options.length === 0 && (
           <p className={styles.title}>К сожалению, данные не загрузились</p>
         )}
-        <InfoMessage text={info} />
+        <InfoMessage text={isEqualValue ? info : ''} />
       </div>
     </div>
   );
